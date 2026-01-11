@@ -8,15 +8,21 @@ from elevenlabs import ElevenLabs
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("VoiceManager")
 
-# Initialize Client
-# Requires ELEVENLABS_API_KEY in env
+# Get the key
+# You need to set ELEVENLABS_API_KEY in your .env or Railway settings
 key = os.getenv("ELEVENLABS_API_KEY")
-logger.info(f"Init VoiceManager. API Key present: {bool(key)}")
+
+if key:
+    print(" hl Voice System: Online and ready.")
+else:
+    # Print a loud warning so I see it in the logs
+    print("!!! WARNING: ElevenLabs API Key is MISSING !!!")
+    print("Please add ELEVENLABS_API_KEY to your environment variables.")
 
 try:
     client = ElevenLabs(api_key=key)
 except Exception as e:
-    logger.warning(f"Voice client init failed: {e}")
+    print(f"Voice client crashed: {e}")
     client = None
 
 import re
