@@ -9,7 +9,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("VoiceManager")
 
 # Get the key
-# You need to set ELEVENLABS_API_KEY in your .env or Railway settings
 key = os.getenv("ELEVENLABS_API_KEY")
 
 if key:

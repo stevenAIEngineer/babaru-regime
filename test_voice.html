@@ -86,13 +86,51 @@
         </select>
 
         <input type="text" id="userInput" placeholder="Say something to Babaru..." value="Who are you?">
-        <button onclick="sendChat()" id="sendBtn">🗣️ Speak to Supreme Leader</button>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="sendChat()" id="sendBtn" style="flex: 2;">🗣️ Speak to Supreme Leader</button>
+            <button onclick="sendSilence()" id="silenceBtn" style="flex: 1; background: #eccc68; color: #333;">😴
+                Nudge</button>
+        </div>
 
         <div id="status" style="margin-top: 10px; font-size: 0.9em; color: #eccc68;"></div>
         <div class="response" id="chatResponse"></div>
     </div>
 
     <script>
+        async function sendSilence() {
+            const status = document.getElementById('status');
+            const url = document.getElementById('endpoint').value;
+            const chatBox = document.getElementById('chatResponse');
+
+            status.innerText = "⏳ Poking Babaru (Simulating Silence)...";
+            chatBox.innerHTML = "";
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: "web_tester",
+                        message: "[SILENCE]",
+                        context: "CONTEXT_USER_SILENT"
+                    })
+                });
+
+                if (!response.ok) throw new Error("API Dead");
+
+                const data = await response.json();
+                chatBox.innerText = data.response;
+                status.innerText = "✅ He replied!";
+
+                if (data.audio_base64) {
+                    const audio = new Audio("data:audio/mp3;base64," + data.audio_base64);
+                    audio.play();
+                }
+            } catch (e) {
+                status.innerText = "❌ Error: " + e.message;
+            }
+        }
+
         async function sendChat() {
             const input = document.getElementById('userInput').value;
             const btn = document.getElementById('sendBtn');
