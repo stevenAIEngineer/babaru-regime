@@ -1,0 +1,157 @@
+<!-- 
+    Author: Steven Lansangan
+    Test for Voice API
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Babaru Voice Test</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #222;
+            color: #fff;
+        }
+
+        .box {
+            background: #333;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        input,
+        button,
+        select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: none;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #ff4757;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #ff6b81;
+        }
+
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+
+        .response {
+            margin-top: 20px;
+            color: #a4b0be;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ff4757;
+        }
+
+        select {
+            background: #444;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="box">
+        <h1>🤡 Babaru Voice Test</h1>
+
+        <label>API Endpoint</label>
+        <select id="endpoint">
+            <option value="http://localhost:8000/v1/chat">Localhost (http://localhost:8000)</option>
+            <option value="https://babaru-regime-production.up.railway.app/v1/chat">Railway Usage (Production)</option>
+        </select>
+
+        <input type="text" id="userInput" placeholder="Say something to Babaru..." value="Who are you?">
+        <button onclick="sendChat()" id="sendBtn">🗣️ Speak to Supreme Leader</button>
+
+        <div id="status" style="margin-top: 10px; font-size: 0.9em; color: #eccc68;"></div>
+        <div class="response" id="chatResponse"></div>
+    </div>
+
+    <script>
+        async function sendChat() {
+            const input = document.getElementById('userInput').value;
+            const btn = document.getElementById('sendBtn');
+            const status = document.getElementById('status');
+            const url = document.getElementById('endpoint').value;
+
+            btn.disabled = true;
+            status.innerText = "Thinking... (and generating voice)";
+            document.getElementById('chatResponse').innerText = "";
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: "web_tester",
+                        message: input,
+                        context: "CONTEXT_GENERAL"
+                    })
+                });
+
+                const data = await response.json();
+
+                // Show text
+                document.getElementById('chatResponse').innerText = data.response;
+                status.innerText = "Response received.";
+
+                // Play Audio
+                if (data.audio_base64) {
+                    status.innerText += " 🔊 Playing Audio...";
+                    const audioUri = "data:audio/mp3;base64," + data.audio_base64;
+                    const audio = new Audio(audioUri);
+                    audio.play().catch(e => {
+                        status.innerText += " (Autoplay blocked? Click document first)";
+                        console.error(e);
+                    });
+
+                    // Create Download Link
+                    const dwnBtn = document.createElement("a");
+                    dwnBtn.href = audioUri;
+                    dwnBtn.download = "babaru_response.mp3";
+                    dwnBtn.innerText = "⬇️ Download MP3";
+                    dwnBtn.style.display = "block";
+                    dwnBtn.style.marginTop = "10px";
+                    dwnBtn.style.color = "#eccc68";
+                    document.getElementById('chatResponse').appendChild(dwnBtn);
+
+                } else {
+                    status.innerText += " 🔇 No Audio returned (Check server logs).";
+                }
+
+            } catch (error) {
+                console.error(error);
+                status.innerText = "Error: " + error.message;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>
