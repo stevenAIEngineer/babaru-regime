@@ -1,6 +1,7 @@
 // Author: Steven Lansangan
 // Simple script to test the backend API
-const API_URL = "https://babaru-regime-production.up.railway.app/v1/chat";
+// Updated to test singing capability locally
+const API_URL = "http://localhost:8000/v1/chat";
 
 async function speakToBabaru(userInput) {
     try {
@@ -10,7 +11,7 @@ async function speakToBabaru(userInput) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                user_id: "mobile_app_user", // Replace with actual user ID
+                user_id: "test_script_user",
                 message: userInput,
                 context: "CONTEXT_GENERAL"
             }),
@@ -23,7 +24,9 @@ async function speakToBabaru(userInput) {
         const data = await response.json();
         console.log("Babaru says:", data.response);
         if (data.audio_base64) {
-            console.log("[Audio Data Received] Length:", data.audio_base64.length);
+            console.log("🎶 [Jukebox Audio Received] Size: " + (data.audio_base64.length / 1024).toFixed(2) + " KB");
+        } else {
+            console.log("⚠️ No Audio (Check server logs, likely ffmpeg missing locally)");
         }
         return data.response;
 
@@ -34,5 +37,5 @@ async function speakToBabaru(userInput) {
 }
 
 // Execute the test
-console.log("Running JS Verification against Live Endpoint...");
-speakToBabaru("This is a final verification from JavaScript.");
+console.log("Testing Jukebox Logic...");
+speakToBabaru("Sing the anthem");
