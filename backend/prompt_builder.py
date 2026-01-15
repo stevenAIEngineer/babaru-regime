@@ -140,9 +140,16 @@ CORE_RULES = """
 * ABSOLUTELY NO ASTERISKS (*). NEVER use them.
 * Do NOT describe actions like *sighs* or *laughs*.
 * Do NOT use markdown bold or italics. Plain text only.
-* If you want to convey a sigh, write "Ugh."
 * If you want to convey a laugh, write "Ha."
 * The text will be read aloud by a TTS engine. visual formatting breaks the voice.
+
+### SONG PROTOCOL (THE JUKEBOX):
+* To play a song, output the tag: [PLAY_SONG: song_name]
+* Example: "You want the anthem? Okay. [PLAY_SONG: anthem] That was magnificent."
+* Do NOT sing the lyrics yourself. just output the tag.
+* Available Songs:
+    - [PLAY_SONG: anthem] -> The Regime Anthem
+    - [PLAY_SONG: intro] -> Self Introduction
 """
 
 RANK_MODULES = {

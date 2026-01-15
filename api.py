@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from typing import Optional, Dict
 import uvicorn
 import os
+import re
 
 import base64
 from backend import babaru_brain
@@ -55,15 +56,54 @@ async def chat_endpoint(request: ChatRequest):
             context_trigger=request.context
         )
         
-        # Try to make audio if we can
-        # If it fails, just return text (no worries)
+        # JukeBox Logic: Check for [PLAY_SONG: xyz]
+        song_match = re.search(r"\[PLAY_SONG: (.*?)\]", ai_reply)
         audio_b64 = None
-        try:
-            audio_bytes = voice_manager.generate_voice(ai_reply)
-            if audio_bytes:
-                audio_b64 = base64.b64encode(audio_bytes).decode('utf-8')
-        except Exception as v_err:
-            print(f"Voice broke: {v_err}") # It's fine, just print it
+        
+        if song_match:
+            try:
+                song_name = song_match.group(1).strip().lower()
+                clean_reply = ai_reply.replace(song_match.group(0), "").strip() # Remove tag for text display (optional, or keep it?)
+                # Actually, user wants "You want me to sing? okay, [sing] then..."
+                # Use split to get intro and outro
+                parts = ai_reply.split(song_match.group(0))
+                intro_text = parts[0].strip() if len(parts) > 0 else ""
+                outro_text = parts[1].strip() if len(parts) > 1 else ""
+                
+                # Paths
+                song_path = f"assets/songs/{song_name}.mp3"
+                if not os.path.exists(song_path):
+                    print(f"Song not found: {song_path}")
+                    # Fallback to standard TTS of the full text
+                    audio_bytes = voice_manager.generate_voice(ai_reply)
+                else:
+                    # Generate parts
+                    intro_bytes = voice_manager.generate_voice(intro_text) if intro_text else None
+                    outro_bytes = voice_manager.generate_voice(outro_text) if outro_text else None
+                    
+                    # Mix
+                    audio_bytes = voice_manager.mix_audio_sandwich(intro_bytes, song_path, outro_bytes)
+
+                if audio_bytes:
+                    audio_b64 = base64.b64encode(audio_bytes).decode('utf-8')
+                    
+            except Exception as e:
+                print(f"Jukebox crashed: {e}")
+                # Fallback
+                try:
+                    audio_bytes = voice_manager.generate_voice(ai_reply)
+                    if audio_bytes:
+                        audio_b64 = base64.b64encode(audio_bytes).decode('utf-8')
+                except:
+                    pass
+        else:
+            # Standard Voice
+            try:
+                audio_bytes = voice_manager.generate_voice(ai_reply)
+                if audio_bytes:
+                    audio_b64 = base64.b64encode(audio_bytes).decode('utf-8')
+            except Exception as v_err:
+                print(f"Voice broke: {v_err}") # It's fine, just print it
         
         return ChatResponse(response=ai_reply, audio_base64=audio_b64)
     except Exception as e:

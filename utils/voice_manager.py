@@ -66,3 +66,38 @@ def generate_voice(text: str, voice_id: str = None) -> bytes:
     except Exception as e:
         logger.error(f"Voice generation failed: {e}")
         return None
+
+# --- Audio Mixing (The Jukebox) ---
+from pydub import AudioSegment
+import io
+
+def mix_audio_sandwich(intro_bytes: bytes, song_path: str, outro_bytes: bytes) -> bytes:
+    """
+    Combines: Intro (TTS) + Song (File) + Outro (TTS) -> One MP3
+    """
+    try:
+        combined = AudioSegment.empty()
+        
+        # 1. Add Intro
+        if intro_bytes:
+            intro = AudioSegment.from_file(io.BytesIO(intro_bytes), format="mp3")
+            combined += intro
+            
+        # 2. Add Song
+        if song_path and os.path.exists(song_path):
+            song = AudioSegment.from_file(song_path) # pydub auto-detects format
+            combined += song
+            
+        # 3. Add Outro
+        if outro_bytes:
+            outro = AudioSegment.from_file(io.BytesIO(outro_bytes), format="mp3")
+            combined += outro
+            
+        # Export
+        buffer = io.BytesIO()
+        combined.export(buffer, format="mp3")
+        return buffer.getvalue()
+        
+    except Exception as e:
+        logger.error(f"Mixing failed: {e}")
+        return None
