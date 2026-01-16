@@ -37,5 +37,5 @@ async function speakToBabaru(userInput) {
 }
 
 // Execute the test
-console.log("Testing Jukebox Logic...");
-speakToBabaru("Sing the anthem");
+console.log("Chatting with Local Babaru...");
+speakToBabaru("Hello Supreme Leader. How is the regime today?");

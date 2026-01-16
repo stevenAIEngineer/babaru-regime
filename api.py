@@ -109,6 +109,36 @@ async def chat_endpoint(request: ChatRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# --- Direct TTS Endpoint ---
+class SpeakRequest(BaseModel):
+    text: str
+
+class SpeakResponse(BaseModel):
+    audio_base64: Optional[str] = None
+
+@app.post("/v1/speak", response_model=SpeakResponse)
+async def speak_endpoint(request: SpeakRequest):
+    """
+    Direct Text-to-Speech (No LLM)
+    """
+    try:
+        # Just generate voice directly
+        audio_bytes = voice_manager.generate_voice(request.text)
+        audio_b64 = None
+        if audio_bytes:
+            audio_b64 = base64.b64encode(audio_bytes).decode('utf-8')
+            
+        return SpeakResponse(audio_base64=audio_b64)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# --- Serve Static Frontend ---
+from fastapi.responses import FileResponse
+
+@app.get("/tts")
+async def serve_tts_ui():
+    return FileResponse('simple_tts.html')
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)

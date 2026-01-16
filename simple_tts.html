@@ -1,0 +1,128 @@
+<!-- 
+    Author: Steven Lansangan
+    Simple TTS Client
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Babaru TTS Tool</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #222;
+            color: #fff;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #eccc68;
+            color: #333;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            background: #ffa502;
+        }
+
+        button:disabled {
+            background: #555;
+            cursor: wait;
+        }
+
+        .status {
+            margin-top: 20px;
+            color: #a4b0be;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🗣️ Babaru Voice Generator</h1>
+    <textarea id="textInput" placeholder="Type what you want Babaru to say..."></textarea>
+    <button id="speakBtn" onclick="generateSpeech()">Generate Speech 🔊</button>
+    <div id="status" class="status"></div>
+    <div id="playerContainer" style="margin-top: 20px;"></div>
+
+    <script>
+        async function generateSpeech() {
+            const text = document.getElementById('textInput').value.trim();
+            if (!text) return;
+
+            const btn = document.getElementById('speakBtn');
+            const status = document.getElementById('status');
+            const container = document.getElementById('playerContainer');
+
+            btn.disabled = true;
+            status.innerText = "Generating audio...";
+            container.innerHTML = "";
+
+            try {
+                // Determine API URL (Local vs Prod handled by relative path if served by same API)
+                // Since this page is served by the API, we can use relative path
+                const response = await fetch('/v1/speak', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+
+                if (!response.ok) throw new Error("API Error");
+
+                const data = await response.json();
+
+                if (data.audio_base64) {
+                    const audioSrc = "data:audio/mp3;base64," + data.audio_base64;
+
+                    // Create Audio Player
+                    const audio = new Audio(audioSrc);
+                    audio.controls = true;
+                    container.appendChild(audio);
+                    audio.play();
+
+                    // Create Download Link
+                    const link = document.createElement('a');
+                    link.href = audioSrc;
+                    link.download = "babaru_tts.mp3";
+                    link.innerText = "⬇️ Download MP3";
+                    link.style.display = "block";
+                    link.style.marginTop = "10px";
+                    link.style.color = "#eccc68";
+                    container.appendChild(link);
+
+                    status.innerText = "Done!";
+                } else {
+                    status.innerText = "No audio returned.";
+                }
+            } catch (e) {
+                status.innerText = "Error: " + e.message;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>
